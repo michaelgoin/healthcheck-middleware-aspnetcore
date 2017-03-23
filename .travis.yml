@@ -2,6 +2,8 @@ language: csharp
 solution: healthcheck-middleware.sln
 mono: none
 dotnet: 1.0.1
+dist: trusty
+sudo: required
 
 script:
   - xbuild /p:Configuration=Release healthcheck-middleware.sln
