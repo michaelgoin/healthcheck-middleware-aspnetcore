@@ -1,0 +1,9 @@
+language: csharp
+solution: healthcheck-middleware.sln
+mono: none
+dotnet: 1.0.1
+
+script:
+  - xbuild /p:Configuration=Release healthcheck-middleware.sln
+  - dotnet test ./test/UnitTests/bin/Release/netcoreapp1.1/Healthcheck.Middleware.AspNetCore.UnitTests.dll
+  - dotnet test ./test/IntegrationTests/bin/Release/netcoreapp1.1/Healthcheck.Middleware.AspNetCore.IntegrationTests.dll
