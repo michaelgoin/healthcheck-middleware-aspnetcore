@@ -2,8 +2,8 @@
 
   <PropertyGroup>    
     <TargetFramework>netcoreapp1.1</TargetFramework>    
-    <AssemblyName>Healthcheck.Middleware.AspNetCore.UnitTests</AssemblyName>    
-    <RootNamespace>Healthcheck.Middleware.AspNetCore.UnitTests</RootNamespace>
+    <AssemblyName>UnitTests</AssemblyName>    
+    <RootNamespace>UnitTests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

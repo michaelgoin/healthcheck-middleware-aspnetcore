@@ -3,10 +3,11 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.Hosting;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
+using Healthcheck.Middleware.AspNetCore;
 
-namespace Healthcheck.Middleware.AspNetCore.IntegrationTests
+namespace IntegrationTests
 {
-    public class UseHealthcheckMiddlewareTests
+    public class UseMiddlewareAddChecksTests
     {
         [Fact]
         public async Task ShouldReturnSuccessAndDataWhenUsedForRoute()
@@ -43,23 +44,35 @@ namespace Healthcheck.Middleware.AspNetCore.IntegrationTests
                 Assert.Contains("PrivateMemoryUsed", content);
             }
         }
-    }
 
-    public class UseHealthcheckMiddlewareForRouteStartup
-    {
-        public const string RouteUsed = "/healthcheckForRoute";
-        public void Configure(IApplicationBuilder app)
+        public class UseHealthcheckMiddlewareForRouteStartup
         {
-            app.UseHealthcheckMiddleware(RouteUsed);
+            public const string RouteUsed = "/healthcheckForRoute";
+
+            public void Configure(IApplicationBuilder app)
+            {
+                app.UseHealthcheckMiddleware(RouteUsed, new Options()
+                {
+                    AddChecks = ((pass, fail) => pass())
+                });
+            }
         }
-    }
 
-    public class UseHealthcheckMiddlewareManualMapStartup
-    {
-        public const string RouteUsed = "/healthcheckManualMap";
-        public void Configure(IApplicationBuilder app)
+        public class UseHealthcheckMiddlewareManualMapStartup
         {
-            app.Map(RouteUsed, hcApp => hcApp.UseHealthcheckMiddleware());
+            public const string RouteUsed = "/healthcheckManualMap";
+            public void Configure(IApplicationBuilder app)
+            {
+                app.Map(RouteUsed, hcApp => hcApp.UseHealthcheckMiddleware(new Options()
+                {
+                    AddChecks = MyCustomHealthChecks
+                }));
+            }
+
+            private static void MyCustomHealthChecks(PassHealthcheck pass, FailHealthcheck fail)
+            {
+                pass();
+            }
         }
     }
 }
