@@ -31,7 +31,7 @@ namespace Healthcheck.Middleware.AspNetCore
 
             try
             {
-                _addChecks(onPass, (exception) => { });
+                _addChecks(onPass, onFail);
             }
             catch (Exception ex)
             {
@@ -59,14 +59,16 @@ namespace Healthcheck.Middleware.AspNetCore
 
             void onFail(Exception ex)
             {
-                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                var expected = new
-                {
-                    Status = FailureStatus,
-                    Message = ex.Message
-                };
+                var failInfo = new Dictionary<string, object>();
+                failInfo["Status"] = FailureStatus;
 
-                responseJson = JsonConvert.SerializeObject(expected);
+                if(ex != null)
+                {
+                    failInfo["Message"] = ex.Message;
+                }
+
+                responseJson = JsonConvert.SerializeObject(failInfo);
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 context.Response.ContentType = JsonContentType;
                 context.Response.ContentLength = responseJson.Length;
             }

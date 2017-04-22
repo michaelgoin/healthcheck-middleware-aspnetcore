@@ -276,6 +276,113 @@ namespace UnitTests
             }
         }
 
+        public class WhenFailCalled
+        {
+            [Fact]
+            public async Task ShouldRespondWith500Status()
+            {
+                //Arrange
+                var nextDelegate = GetPlaceholderNextDelegate();
+
+                var mockProcessInfoRetriever = new Mock<IProcessInfoRetriever>();
+                mockProcessInfoRetriever.Setup(x => x.GetProcessInfo()).Returns(new ProcessInfo(TimeSpan.FromSeconds(1), long.MaxValue));
+
+                var testHttpContext = new DefaultHttpContext();
+
+                var options = new Options()
+                {
+                    AddChecks = (pass, fail) => { fail(); }
+                };
+
+                var healthcheckMiddleware = new HealthcheckMiddleware(nextDelegate, mockProcessInfoRetriever.Object, options);
+
+                //Act
+                await healthcheckMiddleware.Invoke(testHttpContext);
+
+                //Assert
+                Assert.Equal(500, testHttpContext.Response.StatusCode);
+            }
+
+            public class WithoutError
+            {
+                [Fact]
+                public async Task ShouldRespondWithFailureStatusJsonOnly()
+                {
+                    //Arrange
+                    var nextDelegate = GetPlaceholderNextDelegate();
+
+                    var testHttpContext = new DefaultHttpContext();
+                    testHttpContext.Response.Body = new MemoryStream();
+
+                    var expected = new
+                    {
+                        Status = HealthcheckMiddleware.FailureStatus
+                    };
+
+                    var expectedJson = JsonConvert.SerializeObject(expected);
+
+                    var mockProcessInfoRetriever = new Mock<IProcessInfoRetriever>();
+
+                    var options = new Options()
+                    {
+                        AddChecks = (pass, fail) => { fail(); }
+                    };
+
+                    var healthcheckMiddleware = new HealthcheckMiddleware(nextDelegate, mockProcessInfoRetriever.Object, options);
+
+                    //Act
+                    await healthcheckMiddleware.Invoke(testHttpContext);
+
+                    //Assert
+                    var response = GetResponseBodyString(testHttpContext);
+
+                    Assert.Equal("application/json", testHttpContext.Response.ContentType);
+                    Assert.Equal(expectedJson, response);
+                }
+            }
+
+            public class WithError
+            {
+                [Fact]
+                public async Task ShouldRespondWithFailureStatusAndErrorMessageJson()
+                {
+                    //Arrange
+                    var nextDelegate = GetPlaceholderNextDelegate();
+
+                    var testHttpContext = new DefaultHttpContext();
+                    testHttpContext.Response.Body = new MemoryStream();
+
+                    var exception = new Exception("BOOM");
+
+                    var expected = new
+                    {
+                        Status = HealthcheckMiddleware.FailureStatus,
+                        Message = exception.Message
+                    };
+
+                    var expectedJson = JsonConvert.SerializeObject(expected);
+
+                    var mockProcessInfoRetriever = new Mock<IProcessInfoRetriever>();
+
+                    var options = new Options()
+                    {
+                        AddChecks = (pass, fail) => { fail(exception); }
+                    };
+
+                    var healthcheckMiddleware = new HealthcheckMiddleware(nextDelegate, mockProcessInfoRetriever.Object, options);
+
+                    //Act
+                    await healthcheckMiddleware.Invoke(testHttpContext);
+
+                    //Assert
+                    var response = GetResponseBodyString(testHttpContext);
+
+                    Assert.Equal("application/json", testHttpContext.Response.ContentType);
+                    Assert.Equal(expectedJson, response);
+                }
+            }
+        }
+
         private static RequestDelegate GetPlaceholderNextDelegate()
         {
             return (innerHttpContext) => Task.FromResult(0);

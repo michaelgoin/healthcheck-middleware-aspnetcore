@@ -20,7 +20,7 @@ public void Configure(IApplicationBuilder app)
     app.UseHealthcheckMiddleware("/healthcheck");
 }
 ```
-> {"Status":"Success!","Uptime":"00:00:44.0102266","PrivateMemoryUsed":314974208}
+> {"Status":"Success","Uptime":"00:00:44.0102266","PrivateMemoryUsed":314974208}
 
 ### Manual
 In some cases, it is preferable to handle the routing manually. Map the middleware without passing in a route.
@@ -31,7 +31,7 @@ public void Configure(IApplicationBuilder app)
     app.Map("/healthcheck", hcApp => hcApp.UseHealthcheckMiddleware());
 }
 ```
-> {"Status":"Success!","Uptime":"00:00:44.0102266","PrivateMemoryUsed":314974208}
+> {"Status":"Success","Uptime":"00:00:44.0102266","PrivateMemoryUsed":314974208}
 
 ### addChecks
 A function that allows the addition of checks to the healthcheck. The function is called as `addChecks(pass, fail)`. You will call `pass()` or `fail()` depending on your desired state.
@@ -70,7 +70,7 @@ If you return properties called `Status`, `Uptime` or `PrivateMemoryUsed` they w
 ```cs
 pass();
 ```
-> {"Status":"Success!","Uptime":"00:00:44.0102266","PrivateMemoryUsed":314974208}
+> {"Status":"Success","Uptime":"00:00:44.0102266","PrivateMemoryUsed":314974208}
 
 ##### Example 2
 ```cs
@@ -97,3 +97,18 @@ customPassInfo.Status = "WORKED!";
 pass(customPassInfo);
 ```
 > {"Status":"WORKED!","Uptime":"00:00:44.0102266","PrivateMemoryUsed":314974208}
+
+#### fail
+Call `fail()` when the intent is the for the healthcheck to fail. Fail accepts an Exception as an argument. Calling fail will result in a status 500 and a JSON message indicating failure with the error message.
+
+##### Example 1
+```cs
+fail();
+```
+> {"Status":"Failure"}
+
+##### Example 2
+```cs
+fail(new Exception("some error"));
+```
+> {"Status":"Failure","Message":"some error"}
